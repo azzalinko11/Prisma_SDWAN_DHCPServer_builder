@@ -19,8 +19,10 @@ sdk.interactive.login_secret(client_id=credentials_file.client_id,
 # Path to the CSV file containing the DHCP config lists
 csv_file = 'dhcp_import.csv'
 
-# Read the DHCP config from the CSV file
+# Read the DHCP configurations from the CSV file
 dhcp_objects = []
+site_ids = []  # Store SITE_ID values
+
 with open(csv_file, 'r') as file:
     reader = csv.DictReader(file)
     for row in reader:
@@ -51,18 +53,19 @@ with open(csv_file, 'r') as file:
             "vrf_context_id": row['VRF_ID']
         }
         dhcp_objects.append(dhcp_object)
-        # Extract SITE_ID from the current row
-        site_id = row['SITE_ID']
-
-#convert to json and strip brackets
-dhcp_data_cov_json = json.dumps(dhcp_objects, indent = 4)[1:-1]
-print(dhcp_data_cov_json)
+        # Extract SITE_ID from the current row and store it in the list
+        site_ids.append(row['SITE_ID'])
 
 # Send the POST request to add the address objects with error handling
 success_count = 0
 failure_count = 0
 
-for dhcp_obj in dhcp_objects:
+#convert to json and strip brackets (Print to screen)
+dhcp_data_cov_json = json.dumps(dhcp_objects, indent = 4)[1:-1]
+print(dhcp_data_cov_json)
+
+# Iterate over both DHCP objects and SITE_IDs
+for dhcp_obj, site_id in zip(dhcp_objects, site_ids):
     try:
         response = sdk.post.dhcpservers(
             site_id=site_id,
